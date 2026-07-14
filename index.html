@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>스낵매치 점수 계산기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#E5484D; --orange:#F5A623; --green:#46A758; --blue:#3B9EFF;
+  --cream:#FFFDF4; --paper:#FFF7E4; --brown:#7A4A2B; --ink:#4A3020;
+  --line:#EFDFBE; --mut:#9A7E5E; --bad:#C6363C;
+  --shadow:0 4px 0 rgba(122,74,43,.14);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Gowun Dodum','Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+  color:var(--ink); font-size:17px; line-height:1.5;
+  background:
+    repeating-linear-gradient(0deg, rgba(229,72,77,.42) 0 26px, transparent 26px 52px),
+    repeating-linear-gradient(90deg, rgba(229,72,77,.42) 0 26px, transparent 26px 52px),
+    #FFF3E4;
+  min-height:100vh;
+  padding:16px 12px 60px;
+}
+.wrap{max-width:1320px;margin:0 auto}
+h1,h2,h3,.jua{font-family:'Jua','Gowun Dodum',sans-serif;font-weight:400}
+
+/* ── 패널 공통 ─────────────────────────── */
+.panel{
+  background:var(--cream); border:3px solid var(--line); border-radius:22px;
+  box-shadow:var(--shadow); padding:18px 20px; margin-bottom:18px; position:relative;
+}
+.panel::before{
+  content:""; position:absolute; inset:7px; border:2px dashed rgba(122,74,43,.18);
+  border-radius:15px; pointer-events:none;
+}
+.panel>*{position:relative}
+
+/* ── 헤더 ─────────────────────────────── */
+header.hero{ text-align:center; padding:22px 16px 18px; }
+.mascots{display:flex;justify-content:center;gap:14px;margin-bottom:6px;flex-wrap:wrap}
+.mascots svg{filter:drop-shadow(0 3px 0 rgba(122,74,43,.18))}
+@media (prefers-reduced-motion:no-preference){
+  .mascots svg{animation:bob 2.6s ease-in-out infinite}
+  .mascots svg:nth-child(2){animation-delay:.35s}
+  .mascots svg:nth-child(3){animation-delay:.7s}
+  .mascots svg:nth-child(4){animation-delay:1.05s}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-7px) rotate(3deg)}}
+}
+h1{font-size:clamp(30px,4.6vw,46px);margin:2px 0 0;color:var(--brown);letter-spacing:1px}
+h1 .em{color:var(--red)}
+.hero .sub{color:var(--mut);font-size:15px;margin-top:4px}
+.hero .tag{
+  display:inline-block;background:var(--red);color:#fff;font-family:'Jua';
+  padding:3px 14px;border-radius:999px;font-size:14px;letter-spacing:2px;margin-bottom:8px;
+}
+
+/* ── 설정 바 ──────────────────────────── */
+.settings{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;justify-content:center}
+.setgrp{display:flex;align-items:center;gap:10px}
+.setlab{font-family:'Jua';color:var(--brown);font-size:17px;white-space:nowrap}
+.seg{display:inline-flex;background:var(--paper);border:2.5px solid var(--line);border-radius:14px;overflow:hidden}
+.seg button{
+  font-family:'Jua';font-size:16px;border:0;background:transparent;color:var(--mut);
+  padding:10px 16px;min-height:48px;cursor:pointer;transition:.15s;
+}
+.seg button.on{background:var(--brown);color:#fff}
+.seg button:not(.on):hover{background:#F6ECD6}
+.stepper{display:inline-flex;align-items:center;gap:0;border:2.5px solid var(--line);border-radius:14px;background:var(--paper);overflow:hidden}
+.stepper button{
+  font-family:'Jua';font-size:24px;width:52px;min-height:48px;border:0;cursor:pointer;
+  background:transparent;color:var(--brown);line-height:1;
+}
+.stepper button:hover{background:#F6ECD6}
+.stepper .val{font-family:'Jua';font-size:22px;min-width:56px;text-align:center;color:var(--ink)}
+.switch{position:relative;display:inline-flex;align-items:center;cursor:pointer;gap:8px}
+.switch input{position:absolute;opacity:0;width:0;height:0}
+.switch .track{
+  width:62px;height:34px;border-radius:999px;background:#E8DAC0;border:2.5px solid var(--line);
+  position:relative;transition:.2s;flex:none;
+}
+.switch .track::after{
+  content:"";position:absolute;top:2px;left:2px;width:26px;height:26px;border-radius:50%;
+  background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:.2s;
+}
+.switch input:checked + .track{background:var(--green);border-color:#3B8E4A}
+.switch input:checked + .track::after{left:30px}
+.switch input:focus-visible + .track{outline:3px solid var(--blue);outline-offset:2px}
+.switch.dis{opacity:.45;cursor:not-allowed}
+.btn{
+  font-family:'Jua';font-size:16px;border:2.5px solid var(--line);border-radius:14px;
+  background:var(--paper);color:var(--brown);padding:10px 18px;min-height:48px;cursor:pointer;
+  box-shadow:0 3px 0 rgba(122,74,43,.12);transition:.12s;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(1px);box-shadow:none}
+.btn.danger{color:var(--bad)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+
+/* ── 섹션 제목 ────────────────────────── */
+.sechead{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.sechead h2{font-size:22px;color:var(--brown);margin:0}
+.sechead .badge{background:var(--orange);color:#fff;font-family:'Jua';font-size:13px;padding:2px 10px;border-radius:999px}
+.hint{color:var(--mut);font-size:14px}
+
+/* ── 보너스 패널 ──────────────────────── */
+.diffbtns{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.diffbtns .btn{font-size:15px}
+.diffbtns .btn .dot{display:inline-block;width:12px;height:12px;border-radius:50%;margin-left:4px;vertical-align:-1px}
+.dot.g{background:var(--green)} .dot.r{background:var(--red)}
+.bsets{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.bset{background:var(--paper);border:2.5px solid var(--line);border-radius:16px;padding:14px}
+.bset h3{margin:0 0 10px;font-size:18px;color:var(--brown);display:flex;align-items:center;gap:8px}
+.bset .row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.bset label{font-size:14px;color:var(--mut);min-width:64px;font-family:'Jua'}
+.bset select{
+  font-family:'Gowun Dodum';font-size:16px;padding:10px 12px;min-height:48px;border-radius:12px;
+  border:2.5px solid var(--line);background:#fff;color:var(--ink);flex:1;min-width:180px;
+}
+.cardinfo{display:flex;align-items:flex-start;gap:8px;font-size:14.5px;background:#fff;border:2px dashed var(--line);border-radius:12px;padding:9px 12px;margin-top:6px}
+.cbadge{flex:none;font-family:'Jua';font-size:13px;color:#fff;border-radius:8px;padding:2px 8px;margin-top:1px}
+.cbadge.green{background:var(--green)} .cbadge.red{background:var(--red)}
+.needinput{color:var(--blue);font-family:'Jua';font-size:13px}
+
+/* ── 모드 A 플레이어 카드 ─────────────── */
+.pcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.pcard{background:var(--paper);border:2.5px solid var(--line);border-radius:18px;padding:14px 14px 12px}
+.pchead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pnum{
+  flex:none;width:38px;height:38px;border-radius:50%;background:var(--brown);color:#fff;
+  font-family:'Jua';font-size:18px;display:flex;align-items:center;justify-content:center;
+}
+.pname{
+  flex:1;min-width:0;font-family:'Jua';font-size:18px;color:var(--ink);border:0;border-bottom:2.5px dashed var(--line);
+  background:transparent;padding:6px 4px;min-height:44px;
+}
+.ptot{flex:none;font-family:'Jua';font-size:18px;color:var(--red);white-space:nowrap}
+.trow{border-top:2px dashed var(--line);padding:9px 0 7px}
+.trow .tline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tname{display:flex;align-items:center;gap:6px;font-family:'Jua';font-size:15.5px;color:var(--brown);min-width:92px}
+.chips{display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1}
+.chip{display:inline-flex;align-items:center;background:#fff;border:2.5px solid var(--line);border-radius:12px;overflow:hidden}
+.chip button{
+  border:0;background:transparent;font-family:'Jua';font-size:19px;width:38px;min-height:44px;cursor:pointer;color:var(--brown);
+}
+.chip button:hover{background:#F6ECD6}
+.chip .cv{font-family:'Jua';font-size:18px;min-width:30px;text-align:center}
+.chip .cx{color:var(--bad);font-size:15px;width:30px}
+.addg{
+  border:2.5px dashed var(--line);background:transparent;border-radius:12px;font-family:'Jua';
+  font-size:14px;color:var(--mut);padding:0 12px;min-height:44px;cursor:pointer;
+}
+.addg:hover{background:#F6ECD6;color:var(--brown)}
+.gtext{
+  flex:1;min-width:110px;font-size:17px;padding:9px 12px;min-height:44px;border-radius:12px;
+  border:2.5px solid var(--line);background:#fff;font-family:'Gowun Dodum';
+}
+.texpr{width:100%;font-size:13.5px;color:var(--mut);margin-top:4px;padding-left:2px;min-height:1.2em}
+.texpr b{color:var(--green);font-family:'Jua';font-weight:400}
+.pwarn{color:var(--bad);font-size:13.5px;font-family:'Jua';margin-top:6px}
+.pbonusline{font-size:13.5px;color:var(--blue);font-family:'Jua';margin-top:4px}
+.pextras{border-top:2px dashed var(--line);margin-top:8px;padding-top:8px}
+.pextras .exrow{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.pextras label{font-size:13.5px;color:var(--mut);flex:1;min-width:170px}
+.pextras input{
+  width:82px;font-size:18px;font-family:'Jua';text-align:center;padding:8px;min-height:44px;
+  border-radius:12px;border:2.5px solid var(--line);background:#fff;
+}
+.catlab{font-family:'Jua';font-size:13px;color:#fff;border-radius:8px;padding:1px 9px;display:inline-block;margin:8px 0 2px}
+.catlab.snack{background:var(--orange)} .catlab.cloth{background:var(--blue)}
+
+/* ── 결과/입력 표 ─────────────────────── */
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:14px}
+table.score{border-collapse:separate;border-spacing:0;width:100%;min-width:560px;background:#fff;border:2.5px solid var(--line);border-radius:14px;overflow:hidden}
+table.score th,table.score td{border-bottom:2px solid var(--line);border-right:2px solid var(--line);padding:9px 10px;text-align:center;font-size:17px}
+table.score tr>*:last-child{border-right:0}
+table.score tr:last-child>*{border-bottom:0}
+table.score thead th{
+  background:
+    repeating-linear-gradient(0deg, rgba(229,72,77,.16) 0 10px, transparent 10px 20px),
+    repeating-linear-gradient(90deg, rgba(229,72,77,.16) 0 10px, transparent 10px 20px),
+    var(--paper);
+  font-family:'Jua';color:var(--brown);
+}
+table.score th.rowh{
+  position:sticky;left:0;background:var(--paper);text-align:left;font-family:'Jua';font-weight:400;
+  color:var(--brown);white-space:nowrap;min-width:132px;z-index:2;font-size:15.5px;
+}
+table.score th.rowh .ric{vertical-align:-6px;margin-right:5px}
+table.score thead th.corner{position:sticky;left:0;z-index:3}
+.colname{
+  width:96px;max-width:110px;font-family:'Jua';font-size:15px;text-align:center;border:0;
+  border-bottom:2px dashed var(--line);background:transparent;padding:5px 2px;color:var(--ink);
+}
+td input.cellin{
+  width:74px;font-size:19px;font-family:'Jua';text-align:center;padding:8px 4px;min-height:46px;
+  border-radius:10px;border:2.5px solid var(--line);background:var(--cream);
+}
+td input.cellin:disabled{opacity:.3;background:#eee}
+tr.totrow td,tr.totrow th{background:#FFF1D6;font-family:'Jua';font-size:20px;color:var(--red)}
+tr.rankrow td,tr.rankrow th{background:#FDE8E9;font-family:'Jua';font-size:18px}
+tr.bonusrow th.rowh,tr.bonusrow td{background:#F0F7FF}
+tr.tierow th.rowh,tr.tierow td{background:#FFFBEA}
+.cellexpr{display:block;font-size:11.5px;color:var(--mut);margin-top:2px;line-height:1.25}
+.ranksub{display:block;font-size:11.5px;color:var(--mut);font-family:'Gowun Dodum'}
+.medal{font-size:22px;vertical-align:-2px}
+
+/* ── 1인 모드 ─────────────────────────── */
+.solo .robotrow{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+.solo .rin{display:flex;flex-direction:column;gap:4px}
+.solo .rin label{font-size:14px;color:var(--mut);font-family:'Jua'}
+.solo .rin input{
+  width:130px;font-size:22px;font-family:'Jua';text-align:center;padding:9px;min-height:52px;
+  border-radius:14px;border:2.5px solid var(--line);background:#fff;
+}
+.banner{
+  margin-top:14px;border-radius:16px;padding:14px 18px;font-family:'Jua';font-size:22px;text-align:center;
+  border:3px solid var(--line);background:var(--paper);color:var(--brown);
+}
+.banner.win{background:#E9F6EC;border-color:var(--green);color:#2C7A3C}
+.banner.lose{background:#FDEBEC;border-color:var(--red);color:var(--bad)}
+.banner .vs{display:block;font-size:15px;color:var(--mut);margin-top:3px;font-family:'Gowun Dodum'}
+
+footer{color:#fff;text-shadow:0 1px 2px rgba(122,74,43,.6);text-align:center;font-size:13px;margin-top:8px}
+.hidden{display:none !important}
+@media (max-width:640px){
+  body{font-size:16px;padding:10px 8px 50px}
+  .panel{padding:14px 13px}
+  .settings{gap:10px 14px}
+  table.score th,table.score td{padding:7px 6px;font-size:15.5px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero panel">
+  <div class="mascots" id="mascots" aria-hidden="true"></div>
+  <span class="tag">SNACK MATCH · 점수 계산기</span>
+  <h1>스낵<span class="em">매치</span> 점수 계산기</h1>
+  <div class="sub">1~9명 · 4라운드 · 4×4 소풍 담요 — 실물 게임을 마친 뒤 점수만 입력하세요!</div>
+</header>
+
+<!-- 설정 -->
+<section class="panel">
+  <div class="settings">
+    <div class="setgrp">
+      <span class="setlab">인원</span>
+      <div class="stepper">
+        <button type="button" id="pcMinus" aria-label="인원 줄이기">−</button>
+        <span class="val" id="pcVal">4</span>
+        <button type="button" id="pcPlus" aria-label="인원 늘리기">＋</button>
+      </div>
+    </div>
+    <div class="setgrp">
+      <span class="setlab">입력 모드</span>
+      <div class="seg" id="modeSeg">
+        <button type="button" data-m="A" class="on">A · 자동 계산</button>
+        <button type="button" data-m="B">B · 직접 입력</button>
+      </div>
+    </div>
+    <div class="setgrp" id="styleGrp">
+      <span class="setlab">그룹 입력</span>
+      <div class="seg" id="styleSeg">
+        <button type="button" data-s="stepper" class="on">버튼</button>
+        <button type="button" data-s="text">텍스트</button>
+      </div>
+    </div>
+    <div class="setgrp">
+      <label class="switch" id="bonusSwitch">
+        <input type="checkbox" id="bonusChk">
+        <span class="track"></span>
+        <span class="setlab">특별한 소풍 (보너스)</span>
+      </label>
+    </div>
+    <div class="setgrp">
+      <button type="button" class="btn danger" id="resetBtn">↺ 초기화</button>
+    </div>
+  </div>
+  <div class="hint" id="soloNote" style="text-align:center;margin-top:8px;display:none">
+    🤖 1인 모드: 소풍로봇과 대결합니다. 보너스 카드는 적용되지 않아요.
+  </div>
+</section>
+
+<!-- 보너스 패널 -->
+<section class="panel" id="bonusPanel" style="display:none">
+  <div class="sechead"><h2>🧺 특별한 소풍 — 보너스 카드</h2><span class="badge">세트 2개</span></div>
+  <div class="diffbtns">
+    <span class="setlab">난이도 뽑기</span>
+    <button type="button" class="btn" data-diff="easy">쉬움 <span class="dot g"></span><span class="dot g"></span></button>
+    <button type="button" class="btn" data-diff="medium">중간 <span class="dot g"></span><span class="dot r"></span></button>
+    <button type="button" class="btn" data-diff="hard">어려움 <span class="dot r"></span><span class="dot r"></span></button>
+    <span class="hint">누르면 무작위로 뽑고, 아래에서 직접 바꿀 수 있어요.</span>
+  </div>
+  <div class="bsets" id="bsets"></div>
+  <div class="hint" id="bonusModeBNote" style="margin-top:10px;display:none">
+    ✍️ 모드 B에서는 아래 표의 <b>보너스</b> 칸에 점수를 직접 입력합니다.
+  </div>
+</section>
+
+<!-- 1인 모드(소풍로봇) -->
+<section class="panel solo" id="soloPanel" style="display:none">
+  <div class="sechead"><h2>🤖 소풍로봇 (1인 모드 · 8라운드)</h2></div>
+  <div class="robotrow">
+    <div class="rin">
+      <label for="robSnack">로봇의 최다 스낵 개수</label>
+      <input type="number" id="robSnack" min="0" max="64" inputmode="numeric" placeholder="0">
+    </div>
+    <div class="rin">
+      <label for="robCloth">로봇의 최다 식탁보 개수</label>
+      <input type="number" id="robCloth" min="0" max="64" inputmode="numeric" placeholder="0">
+    </div>
+    <div class="hint" style="align-self:center">로봇 점수 = 최다 스낵 개수 + 최다 식탁보 개수</div>
+  </div>
+  <div class="banner" id="soloBanner">로봇 점수와 내 총점을 입력하면 결과가 나와요.</div>
+</section>
+
+<!-- 입력 영역 (모드 A) -->
+<section class="panel" id="inputPanel">
+  <div class="sechead"><h2 id="inputTitle">✏️ 그룹 크기 입력</h2><span class="hint" id="inputHint"></span></div>
+  <div id="inputArea"></div>
+</section>
+
+<!-- 결과 표 -->
+<section class="panel">
+  <div class="sechead"><h2>🏆 점수표</h2><span class="hint">활동지와 같은 구성 · 행: 스낵 4종 + 식탁보 4색 + 총점 + 순위</span></div>
+  <div class="tablewrap" id="resultsArea"></div>
+</section>
+
+<footer>스낵매치 (Snack Match) · Blue Orange / 행복한바오밥 · 교실용 채점 도구 — 게임은 실물로, 채점은 여기서!</footer>
+</div>
+
+<script>
+/* ════════ 확정 데이터 (노션 검증 완료 — 임의 수정 금지) ════════ */
+const META = { game:"스낵매치", publisher:"Blue Orange / 행복한바오밥",
+  players:{min:1,max:9}, playTime:"10분", age:"8+", rounds:4, cardsPerPlayer:8, board:"4x4" };
+const SNACKS = [
+  {id:"donut",name:"도넛"},{id:"sandwich",name:"샌드위치"},
+  {id:"sausage",name:"소시지"},{id:"drink",name:"음료수"}
+];
+const CLOTHS = [
+  {id:"red",name:"빨간색",hex:"#E5484D"},{id:"orange",name:"주황색",hex:"#F5A623"},
+  {id:"green",name:"초록색",hex:"#46A758"},{id:"blue",name:"파란색",hex:"#3B9EFF"}
+];
+const TYPES = [
+  ...SNACKS.map(s=>({...s,cat:"snack"})),
+  ...CLOTHS.map(c=>({...c,cat:"cloth"}))
+];
+const BONUS_CARDS = [
+  {id:"g1",no:1,color:"green",rule:"least",pts:3,auto:"전원 비교",text:"대상 최소 보유자 +3 (동점 시 모두)"},
+  {id:"g2",no:2,color:"green",rule:"corners",pts:1,max:4,extraInputA:true,text:"귀퉁이 4칸 중 대상 칸마다 +1"},
+  {id:"g3",no:3,color:"green",rule:"perGroup",pts:1,text:"대상 그룹마다 +1 (1~2개 그룹 포함)"},
+  {id:"g4",no:4,color:"green",rule:"fullLine",pts:2,extraInputA:true,text:"대상 4개 완성 가로/세로줄마다 +2"},
+  {id:"r1",no:5,color:"red",rule:"most",pts:-3,auto:"전원 비교",text:"대상 최다 보유자 -3 (동점 시 모두)"},
+  {id:"r2",no:6,color:"red",rule:"size1Group",pts:-2,text:"대상 1개짜리 그룹마다 -2"},
+  {id:"r3",no:7,color:"red",rule:"center",pts:-2,max:-8,extraInputA:true,text:"중앙 4칸 중 대상 칸마다 -2"},
+  {id:"r4",no:8,color:"red",rule:"size2Group",pts:-2,text:"대상 2개짜리 그룹마다 -2"}
+];
+const RULES = { groupScore:"max(n-2,0)", totalPerTypeMax:16 };
+
+/* ════════ SVG 아이콘 ════════ */
+function iconSVG(id,size=26,face=false){
+  const s=`width="${size}" height="${size}" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"`;
+  const eyes=(x1,y1,x2,y2)=>`<circle cx="${x1}" cy="${y1}" r="2" fill="#3B2A1A"/><circle cx="${x2}" cy="${y2}" r="2" fill="#3B2A1A"/>`;
+  const smile=(x,y)=>`<path d="M${x-4} ${y} q4 3.4 8 0" fill="none" stroke="#3B2A1A" stroke-width="2" stroke-linecap="round"/>`;
+  if(id==="donut"){
+    return `<svg ${s}>
+      <circle cx="24" cy="24" r="19" fill="#EBB35C" stroke="#B97B2E" stroke-width="2.5"/>
+      <path d="M24 7a17 17 0 1 0 .001 34A17 17 0 0 0 24 7Zm0 10.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13Z" fill="#F0729B"/>
+      <circle cx="24" cy="24" r="6.5" fill="#FFF8E7" stroke="#B97B2E" stroke-width="2"/>
+      <rect x="13" y="12.5" width="4.4" height="2" rx="1" fill="#FFF" transform="rotate(-24 15 13.5)"/>
+      <rect x="29" y="11.5" width="4.4" height="2" rx="1" fill="#F5C542" transform="rotate(20 31 12.5)"/>
+      <rect x="35" y="20" width="4.4" height="2" rx="1" fill="#46A758" transform="rotate(70 37 21)"/>
+      <rect x="8" y="22" width="4.4" height="2" rx="1" fill="#3B9EFF" transform="rotate(80 10 23)"/>
+      <rect x="19" y="35.5" width="4.4" height="2" rx="1" fill="#FFF" transform="rotate(14 21 36.5)"/>
+      ${face?`${eyes(14.5,24,33.5,24)}<circle cx="11" cy="29" r="2.2" fill="#F59BB4" opacity=".8"/><circle cx="37" cy="29" r="2.2" fill="#F59BB4" opacity=".8"/>`:""}
+    </svg>`;
+  }
+  if(id==="sandwich"){
+    return `<svg ${s}>
+      <path d="M24 6 L44 40 H4 Z" fill="#F3C46B" stroke="#B97B2E" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M24 6 L44 40" fill="none" stroke="#D89B45" stroke-width="4" stroke-linecap="round" opacity=".6"/>
+      <path d="M7 39.5 q3.4 -4.4 6.8 0 t6.8 0 t6.8 0 t6.8 0 t6.8 0" fill="none" stroke="#46A758" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M11.5 35 h25" stroke="#E5484D" stroke-width="3" stroke-linecap="round"/>
+      ${face?`${eyes(19.5,24,28.5,24)}${smile(24,28)}`:""}
+    </svg>`;
+  }
+  if(id==="sausage"){
+    return `<svg ${s}>
+      <rect x="4.5" y="16.5" width="39" height="15" rx="7.5" fill="#C9563C" stroke="#8E3A26" stroke-width="2.5"/>
+      <path d="M9.5 20.5 q-2 3.5 0 7 M38.5 20.5 q2 3.5 0 7" fill="none" stroke="#8E3A26" stroke-width="2" stroke-linecap="round"/>
+      <path d="M13 20.5 q9 -2.6 18 0" fill="none" stroke="#E98A6F" stroke-width="3" stroke-linecap="round"/>
+      ${face?`${eyes(19.5,24,28.5,24)}${smile(24,26.5)}`
+            :`<path d="M13 27 q3 -3.2 6 0 t6 0 t6 0" fill="none" stroke="#F5C542" stroke-width="2.8" stroke-linecap="round"/>`}
+    </svg>`;
+  }
+  if(id==="drink"){
+    return `<svg ${s}>
+      <path d="M28 4 l6.5 2.6 -4.4 10" fill="none" stroke="#E5484D" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M12 16.5 h24 l-3.4 26 h-17.2 Z" fill="#CDE7FF" stroke="#2B6CB0" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M17 22 l1.7 17 M31 22 l-1.7 17" stroke="#8CC4F5" stroke-width="3" stroke-linecap="round"/>
+      <rect x="10" y="13.5" width="28" height="5.4" rx="2.7" fill="#3B9EFF" stroke="#2B6CB0" stroke-width="2"/>
+      ${face?`${eyes(19.5,28,28.5,28)}${smile(24,32)}`:""}
+    </svg>`;
+  }
+  // 식탁보 색상 스와치 (미니 체크무늬)
+  const c = CLOTHS.find(c=>c.id===id);
+  if(c){
+    const u="cl"+id;
+    return `<svg ${s}>
+      <defs><clipPath id="${u}"><rect x="4" y="4" width="40" height="40" rx="8"/></clipPath></defs>
+      <rect x="4" y="4" width="40" height="40" rx="8" fill="#fff"/>
+      <g clip-path="url(#${u})" fill="${c.hex}">
+        <rect x="4" y="11" width="40" height="9" opacity=".55"/><rect x="4" y="28" width="40" height="9" opacity=".55"/>
+        <rect x="11" y="4" width="9" height="40" opacity=".55"/><rect x="28" y="4" width="9" height="40" opacity=".55"/>
+        <rect x="11" y="11" width="9" height="9"/><rect x="28" y="11" width="9" height="9"/>
+        <rect x="11" y="28" width="9" height="9"/><rect x="28" y="28" width="9" height="9"/>
+      </g>
+      <rect x="4" y="4" width="40" height="40" rx="8" fill="none" stroke="${c.hex}" stroke-width="2.5"/>
+    </svg>`;
+  }
+  return "";
+}
+
+/* ════════ 상태 ════════ */
+function newPlayer(i){
+  return {
+    name:`플레이어${i+1}`,
+    groups:Object.fromEntries(TYPES.map(t=>[t.id,[]])),   // 모드 A: 유형별 그룹 크기 배열
+    scoresB:Object.fromEntries(TYPES.map(t=>[t.id,""])),  // 모드 B: 유형별 점수 직접 입력
+    bonusB:"",                                            // 모드 B: 보너스 점수 직접 입력
+    extra:["",""],                                        // 모드 A: 보너스 세트별 추가 입력(귀퉁이·중앙·줄)
+    tb:""                                                 // 모드 B: 동점 시 최대 그룹 크기
+  };
+}
+const state = {
+  mode:"A", inputStyle:"stepper", playerCount:4,
+  players:Array.from({length:9},(_,i)=>newPlayer(i)),
+  bonus:{on:false,sets:[{target:"donut",card:"g1"},{target:"red",card:"g3"}]},
+  robot:{snack:"",cloth:""}
+};
+
+const $=id=>document.getElementById(id);
+const num=v=>{const n=parseInt(v,10);return Number.isFinite(n)?n:0;};
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const signed=v=>v>0?`+${v}`:v<0?`−${Math.abs(v)}`:"0";
+const isSolo=()=>state.playerCount===1;
+const bonusActive=()=>state.bonus.on && !isSolo();
+const typeName=id=>{const t=TYPES.find(t=>t.id===id);return t.cat==="cloth"?`${t.name} 식탁보`:t.name;};
+
+/* ════════ 계산 로직 ════════ */
+// 그룹 점수: max(n-2, 0), 1~2개 그룹은 0점
+function typeScoreExpr(groups){
+  const score=groups.reduce((a,n)=>a+Math.max(n-2,0),0);
+  const expr=groups.map(n=>n>2?`(${n}−2)`:"0").join("+");
+  return {score,expr};
+}
+
+function computeAll(){
+  const n=state.playerCount, res=[];
+  for(let i=0;i<n;i++){
+    const p=state.players[i];
+    const r={typeScore:{},typeExpr:{},count:{},base:0,largest:0,warn:[],bonus:[0,0],bonusTotal:0,total:0};
+    TYPES.forEach(t=>{
+      if(state.mode==="A"){
+        const g=p.groups[t.id];
+        const {score,expr}=typeScoreExpr(g);
+        r.typeScore[t.id]=score; r.typeExpr[t.id]=expr;
+        r.count[t.id]=g.reduce((a,b)=>a+b,0);
+        if(g.length) r.largest=Math.max(r.largest,...g);
+      }else{
+        r.typeScore[t.id]=num(p.scoresB[t.id]);
+        r.count[t.id]=0;
+      }
+    });
+    r.base=TYPES.reduce((a,t)=>a+r.typeScore[t.id],0);
+    if(state.mode==="A"){
+      const sSum=SNACKS.reduce((a,s)=>a+r.count[s.id],0);
+      const cSum=CLOTHS.reduce((a,c)=>a+r.count[c.id],0);
+      if(sSum>RULES.totalPerTypeMax) r.warn.push(`⚠ 스낵 개수 합 ${sSum}개 — 4×4 담요는 최대 16개예요`);
+      if(cSum>RULES.totalPerTypeMax) r.warn.push(`⚠ 식탁보 개수 합 ${cSum}개 — 4×4 담요는 최대 16개예요`);
+    }
+    res.push(r);
+  }
+  // 보너스 (특별한 소풍) — 모드 A 자동 판정
+  if(bonusActive() && state.mode==="A"){
+    state.bonus.sets.forEach((set,si)=>{
+      const card=BONUS_CARDS.find(c=>c.id===set.card), t=set.target;
+      if(card.rule==="least"||card.rule==="most"){
+        const counts=res.map(r=>r.count[t]);
+        if(counts.some(c=>c>0)){ // 아무도 입력 전이면 판정 보류
+          const pivot=card.rule==="least"?Math.min(...counts):Math.max(...counts);
+          res.forEach((r,i)=>{ if(counts[i]===pivot) r.bonus[si]+=card.pts; });
+        }
+      }else if(card.rule==="perGroup"){
+        res.forEach((r,i)=>{ r.bonus[si]=state.players[i].groups[t].length*card.pts; });
+      }else if(card.rule==="size1Group"){
+        res.forEach((r,i)=>{ r.bonus[si]=state.players[i].groups[t].filter(g=>g===1).length*card.pts; });
+      }else if(card.rule==="size2Group"){
+        res.forEach((r,i)=>{ r.bonus[si]=state.players[i].groups[t].filter(g=>g===2).length*card.pts; });
+      }else if(card.rule==="corners"){
+        res.forEach((r,i)=>{ r.bonus[si]=clamp(num(state.players[i].extra[si]),0,4)*card.pts; });
+      }else if(card.rule==="center"){
+        res.forEach((r,i)=>{ r.bonus[si]=Math.max(card.pts*clamp(num(state.players[i].extra[si]),0,4),card.max); });
+      }else if(card.rule==="fullLine"){
+        res.forEach((r,i)=>{ r.bonus[si]=clamp(num(state.players[i].extra[si]),0,8)*card.pts; });
+      }
+    });
+  }
+  res.forEach((r,i)=>{
+    r.bonusTotal = bonusActive()
+      ? (state.mode==="A" ? r.bonus[0]+r.bonus[1] : num(state.players[i].bonusB))
+      : 0;
+    r.total=r.base+r.bonusTotal;
+  });
+  return res;
+}
+
+// 순위: 총점 내림차순 → 동점 시 최대 그룹 → 그래도 동점이면 공동 순위
+function computeRanks(res){
+  const n=res.length;
+  const tb=i=> state.mode==="A" ? res[i].largest : num(state.players[i].tb);
+  const totalTied=i=> res.some((r,j)=>j!==i && r.total===res[i].total);
+  const order=[...Array(n).keys()].sort((a,b)=> res[b].total-res[a].total || tb(b)-tb(a));
+  const rank=Array(n).fill(1), shared=Array(n).fill(false), usedTb=Array(n).fill(false);
+  let prev=null;
+  order.forEach((pi,pos)=>{
+    if(prev!==null && res[pi].total===res[prev].total && tb(pi)===tb(prev)){
+      rank[pi]=rank[prev]; shared[pi]=true; shared[prev]=true;
+    }else rank[pi]=pos+1;
+    prev=pi;
+  });
+  res.forEach((r,i)=>{ usedTb[i]= totalTied(i) && !shared[i]; });
+  return {rank,shared,tb,totalTied};
+}
+
+/* ════════ 렌더링 ════════ */
+function tnameHTML(t,size=24){
+  return `${iconSVG(t.id,size)}<span>${t.name}</span>`;
+}
+
+/* — 보너스 패널 — */
+function renderBonusPanel(){
+  $("bonusPanel").style.display = bonusActive() ? "" : "none";
+  if(!bonusActive()) return;
+  $("bonusModeBNote").style.display = state.mode==="B" ? "" : "none";
+  const targetOpts = t => TYPES.map(x=>
+    `<option value="${x.id}" ${x.id===t?"selected":""}>${x.cat==="snack"?"스낵":"식탁보"} · ${x.name}</option>`).join("");
+  const cardOpts = c => BONUS_CARDS.map(x=>
+    `<option value="${x.id}" ${x.id===c?"selected":""}>${x.no}번 ${x.color==="green"?"🟢득점":"🔴감점"} — ${x.text}</option>`).join("");
+  $("bsets").innerHTML = state.bonus.sets.map((set,si)=>{
+    const card=BONUS_CARDS.find(c=>c.id===set.card);
+    return `<div class="bset">
+      <h3>세트 ${si+1} ${iconSVG(set.target,26)}</h3>
+      <div class="row"><label>대상</label>
+        <select data-bset="${si}" data-k="target">${targetOpts(set.target)}</select></div>
+      <div class="row"><label>카드</label>
+        <select data-bset="${si}" data-k="card">${cardOpts(set.card)}</select></div>
+      <div class="cardinfo">
+        <span class="cbadge ${card.color}">${card.color==="green"?"득점":"감점"} ${card.no}번</span>
+        <span>${esc(card.text.replace(/대상/g, typeName(set.target)))}
+          ${card.auto?` <span class="needinput">· ${card.auto} 자동 판정</span>`:""}
+          ${card.extraInputA&&state.mode==="A"?` <span class="needinput">· 아래 플레이어 카드에서 칸 수 입력</span>`:""}
+        </span>
+      </div>
+    </div>`;
+  }).join("");
+  $("bsets").querySelectorAll("select").forEach(sel=>{
+    sel.addEventListener("change",e=>{
+      const si=+e.target.dataset.bset, k=e.target.dataset.k;
+      state.bonus.sets[si][k]=e.target.value;
+      renderBonusPanel(); renderInput(); recalc();
+    });
+  });
+}
+function drawBonus(diff){
+  const colors = diff==="easy"?["green","green"]:diff==="hard"?["red","red"]:["green","red"];
+  const pool=c=>BONUS_CARDS.filter(x=>x.color===c);
+  const pick=a=>a[Math.floor(Math.random()*a.length)];
+  const c1=pick(pool(colors[0]));
+  let c2=pick(pool(colors[1]));
+  while(c2.id===c1.id) c2=pick(pool(colors[1]));
+  const t1=pick(TYPES);
+  let t2=pick(TYPES);
+  while(t2.id===t1.id) t2=pick(TYPES);
+  state.bonus.sets=[{target:t1.id,card:c1.id},{target:t2.id,card:c2.id}];
+  renderBonusPanel(); renderInput(); recalc();
+}
+
+/* — 모드 A: 그룹 칩 — */
+function renderChips(pi,tid){
+  const box=document.querySelector(`[data-chips="${pi}-${tid}"]`);
+  if(!box) return;
+  const g=state.players[pi].groups[tid];
+  box.innerHTML = g.map((v,gi)=>`
+    <span class="chip">
+      <button type="button" data-act="dec" data-p="${pi}" data-t="${tid}" data-g="${gi}" aria-label="줄이기">−</button>
+      <span class="cv">${v}</span>
+      <button type="button" data-act="inc" data-p="${pi}" data-t="${tid}" data-g="${gi}" aria-label="늘리기">＋</button>
+      <button type="button" class="cx" data-act="del" data-p="${pi}" data-t="${tid}" data-g="${gi}" aria-label="그룹 삭제">✕</button>
+    </span>`).join("")
+    + `<button type="button" class="addg" data-act="add" data-p="${pi}" data-t="${tid}">＋ 그룹</button>`;
+  box.querySelectorAll("button").forEach(b=>{
+    b.addEventListener("click",()=>{
+      const {act,p,t,g}=b.dataset, arr=state.players[+p].groups[t];
+      if(act==="add") arr.push(3);
+      else if(act==="del") arr.splice(+g,1);
+      else if(act==="inc") arr[+g]=clamp(arr[+g]+1,1,16);
+      else if(act==="dec") arr[+g]=clamp(arr[+g]-1,1,16);
+      renderChips(+p,t); recalc();
+    });
+  });
+}
+function parseGroups(s){
+  return s.split(/[,\s]+/).map(x=>parseInt(x,10))
+          .filter(n=>Number.isInteger(n)&&n>=1&&n<=16);
+}
+
+/* — 입력 영역 — */
+function renderInput(){
+  $("styleGrp").style.display = state.mode==="A" ? "" : "none";
+  const area=$("inputArea");
+  if(state.mode==="B"){
+    $("inputPanel").style.display="none";
+    area.innerHTML=""; renderResults(); return;
+  }
+  $("inputPanel").style.display="";
+  $("inputTitle").textContent="✏️ 그룹 크기 입력 (모드 A)";
+  $("inputHint").textContent = state.inputStyle==="stepper"
+    ? "＋그룹을 눌러 그룹을 만들고 크기를 조절하세요 (예: 초록 9,3 → 그룹 2개)"
+    : "그룹 크기를 쉼표로 구분해 입력하세요 (예: 9,3)";
+  const extraSets = bonusActive()
+    ? state.bonus.sets.map((s,si)=>({si,set:s,card:BONUS_CARDS.find(c=>c.id===s.card)}))
+        .filter(x=>x.card.extraInputA)
+    : [];
+  const extraLabel=(x)=>{
+    const tn=typeName(x.set.target);
+    if(x.card.rule==="corners") return `세트${x.si+1} · 귀퉁이 4칸 중 ${tn} 칸 수 (0~4)`;
+    if(x.card.rule==="center")  return `세트${x.si+1} · 중앙 4칸 중 ${tn} 칸 수 (0~4)`;
+    return `세트${x.si+1} · ${tn} 4개로 완성한 가로·세로 줄 수 (0~8)`;
+  };
+  area.innerHTML = `<div class="pcards">` +
+    Array.from({length:state.playerCount},(_,pi)=>{
+      const p=state.players[pi];
+      const rows = cat => TYPES.filter(t=>t.cat===cat).map(t=>`
+        <div class="trow">
+          <div class="tline">
+            <span class="tname">${tnameHTML(t,24)}</span>
+            ${state.inputStyle==="stepper"
+              ? `<span class="chips" data-chips="${pi}-${t.id}"></span>`
+              : `<input class="gtext" data-gtext="${pi}-${t.id}" inputmode="numeric"
+                   placeholder="예: 9,3" value="${p.groups[t.id].join(",")}" aria-label="${t.name} 그룹 크기">`}
+          </div>
+          <div class="texpr" id="expr-${pi}-${t.id}"></div>
+        </div>`).join("");
+      return `<div class="pcard">
+        <div class="pchead">
+          <span class="pnum">${pi+1}</span>
+          <input class="pname" data-pname="${pi}" value="${esc(p.name)}" maxlength="10" aria-label="플레이어 ${pi+1} 이름">
+          <span class="ptot" id="ptot-${pi}">0점</span>
+        </div>
+        <span class="catlab snack">스낵</span>${rows("snack")}
+        <span class="catlab cloth">식탁보</span>${rows("cloth")}
+        ${extraSets.length?`<div class="pextras">${extraSets.map(x=>`
+          <div class="exrow">
+            <label for="ex-${pi}-${x.si}">🃏 ${esc(extraLabel(x))}</label>
+            <input id="ex-${pi}-${x.si}" type="number" inputmode="numeric"
+              min="0" max="${x.card.rule==='fullLine'?8:4}"
+              data-extra="${pi}-${x.si}" value="${esc(p.extra[x.si])}" placeholder="0">
+          </div>`).join("")}</div>`:""}
+        <div class="pbonusline" id="pbon-${pi}"></div>
+        <div class="pwarn" id="pwarn-${pi}"></div>
+      </div>`;
+    }).join("") + `</div>`;
+
+  // 이벤트 연결
+  if(state.inputStyle==="stepper"){
+    for(let pi=0;pi<state.playerCount;pi++) TYPES.forEach(t=>renderChips(pi,t.id));
+  }else{
+    area.querySelectorAll("[data-gtext]").forEach(inp=>{
+      inp.addEventListener("input",e=>{
+        const [pi,tid]=e.target.dataset.gtext.split("-");
+        state.players[+pi].groups[tid]=parseGroups(e.target.value);
+        recalc();
+      });
+      inp.addEventListener("blur",e=>{
+        const [pi,tid]=e.target.dataset.gtext.split("-");
+        e.target.value=state.players[+pi].groups[tid].join(",");
+      });
+    });
+  }
+  area.querySelectorAll("[data-pname]").forEach(inp=>{
+    inp.addEventListener("input",e=>{
+      state.players[+e.target.dataset.pname].name=e.target.value;
+      recalc();
+    });
+  });
+  area.querySelectorAll("[data-extra]").forEach(inp=>{
+    inp.addEventListener("input",e=>{
+      const [pi,si]=e.target.dataset.extra.split("-");
+      state.players[+pi].extra[+si]=e.target.value;
+      recalc();
+    });
+  });
+  renderResults();
+}
+
+/* — 결과/입력 표 — */
+function renderResults(){
+  const area=$("resultsArea");
+  const n=state.playerCount;
+  const heads = Array.from({length:n},(_,i)=> state.mode==="B"
+    ? `<th><input class="colname" data-cname="${i}" value="${esc(state.players[i].name)}" maxlength="10" aria-label="플레이어 ${i+1} 이름"></th>`
+    : `<th id="hname-${i}">${esc(state.players[i].name)}</th>`).join("");
+  const typeRows = TYPES.map(t=>{
+    const cells=Array.from({length:n},(_,i)=> state.mode==="B"
+      ? `<td><input class="cellin" type="number" inputmode="numeric" min="0" max="14"
+           data-sb="${i}-${t.id}" value="${esc(state.players[i].scoresB[t.id])}" placeholder="0"
+           aria-label="${esc(state.players[i].name)} ${t.name} 점수"></td>`
+      : `<td id="tc-${i}-${t.id}">0</td>`).join("");
+    return `<tr><th class="rowh"><span class="ric">${iconSVG(t.id,24)}</span>${t.name}</th>${cells}</tr>`;
+  }).join("");
+  let bonusRows="";
+  if(bonusActive()){
+    if(state.mode==="A"){
+      bonusRows=state.bonus.sets.map((set,si)=>{
+        const card=BONUS_CARDS.find(c=>c.id===set.card);
+        const cells=Array.from({length:n},(_,i)=>`<td id="bc-${i}-${si}">0</td>`).join("");
+        return `<tr class="bonusrow"><th class="rowh">🃏 보너스 세트${si+1}
+          <span class="ranksub">${typeName(set.target)} · ${card.color==="green"?"득점":"감점"} ${card.no}번</span></th>${cells}</tr>`;
+      }).join("");
+    }else{
+      const cells=Array.from({length:n},(_,i)=>
+        `<td><input class="cellin" type="number" inputmode="numeric" min="-99" max="99"
+           data-bb="${i}" value="${esc(state.players[i].bonusB)}" placeholder="0"
+           aria-label="${esc(state.players[i].name)} 보너스 점수"></td>`).join("");
+      bonusRows=`<tr class="bonusrow"><th class="rowh">🃏 보너스<span class="ranksub">직접 입력 (세트 합계)</span></th>${cells}</tr>`;
+    }
+  }
+  const tieRow = state.mode==="B"
+    ? `<tr class="tierow" id="tieRow" style="display:none">
+         <th class="rowh">🤝 동점 처리<span class="ranksub">최대 그룹 크기 입력</span></th>
+         ${Array.from({length:n},(_,i)=>`<td><input class="cellin" type="number" inputmode="numeric" min="0" max="16"
+            data-tb="${i}" value="${esc(state.players[i].tb)}" placeholder="0"
+            aria-label="${esc(state.players[i].name)} 최대 그룹 크기"></td>`).join("")}
+       </tr>` : "";
+  const totCells=Array.from({length:n},(_,i)=>`<td id="tot-${i}">0</td>`).join("");
+  const rankCells=Array.from({length:n},(_,i)=>`<td id="rank-${i}">—</td>`).join("");
+  area.innerHTML=`<table class="score">
+    <thead><tr><th class="rowh corner">항목 ＼ 플레이어</th>${heads}</tr></thead>
+    <tbody>${typeRows}${bonusRows}${tieRow}
+      <tr class="totrow"><th class="rowh">🧮 총점</th>${totCells}</tr>
+      <tr class="rankrow"><th class="rowh">🏅 순위</th>${rankCells}</tr>
+    </tbody></table>`;
+  area.querySelectorAll("[data-sb]").forEach(inp=>inp.addEventListener("input",e=>{
+    const [i,tid]=e.target.dataset.sb.split("-");
+    state.players[+i].scoresB[tid]=e.target.value; recalc();
+  }));
+  area.querySelectorAll("[data-bb]").forEach(inp=>inp.addEventListener("input",e=>{
+    state.players[+e.target.dataset.bb].bonusB=e.target.value; recalc();
+  }));
+  area.querySelectorAll("[data-tb]").forEach(inp=>inp.addEventListener("input",e=>{
+    state.players[+e.target.dataset.tb].tb=e.target.value; recalc();
+  }));
+  area.querySelectorAll("[data-cname]").forEach(inp=>inp.addEventListener("input",e=>{
+    state.players[+e.target.dataset.cname].name=e.target.value; recalc();
+  }));
+}
+
+/* — 계산 결과 반영 — */
+function recalc(){
+  const res=computeAll();
+  const {rank,shared,tb,totalTied}=computeRanks(res);
+  const n=state.playerCount;
+
+  for(let i=0;i<n;i++){
+    const r=res[i], p=state.players[i];
+    if(state.mode==="A"){
+      // 플레이어 카드
+      TYPES.forEach(t=>{
+        const el=$(`expr-${i}-${t.id}`);
+        if(el) el.innerHTML = p.groups[t.id].length
+          ? `${esc(r.typeExpr[t.id])} = <b>${r.typeScore[t.id]}점</b>` : "";
+        const tc=$(`tc-${i}-${t.id}`);
+        if(tc) tc.textContent=r.typeScore[t.id];
+      });
+      const pt=$(`ptot-${i}`); if(pt) pt.textContent=`${r.total}점`;
+      const pw=$(`pwarn-${i}`); if(pw) pw.innerHTML=r.warn.join("<br>");
+      const pb=$(`pbon-${i}`);
+      if(pb) pb.textContent = bonusActive()
+        ? `🃏 보너스: 세트1 ${signed(r.bonus[0])} · 세트2 ${signed(r.bonus[1])}` : "";
+      state.bonus.sets.forEach((s,si)=>{
+        const bc=$(`bc-${i}-${si}`); if(bc) bc.textContent=signed(r.bonus[si]);
+      });
+      const hn=$(`hname-${i}`); if(hn) hn.textContent=p.name||`플레이어${i+1}`;
+    }
+    const tot=$(`tot-${i}`); if(tot) tot.textContent=r.total;
+    const rk=$(`rank-${i}`);
+    if(rk){
+      if(isSolo()){ rk.textContent="—"; }
+      else{
+        const medal=rank[i]===1?"🥇":rank[i]===2?"🥈":rank[i]===3?"🥉":"";
+        let sub="";
+        if(state.mode==="A" && totalTied(i) && !shared[i]) sub=`<span class="ranksub">최대 그룹 ${tb(i)}로 판정</span>`;
+        if(shared[i]) sub=`<span class="ranksub">공동 순위</span>`;
+        rk.innerHTML=`${shared[i]?"공동 ":""}${rank[i]}위 <span class="medal">${medal}</span>${sub}`;
+      }
+    }
+  }
+
+  // 모드 B 동점 행: 총점이 겹치는 플레이어에게만 입력칸 활성화
+  if(state.mode==="B"){
+    const row=$("tieRow");
+    if(row){
+      const anyTie=res.some((r,i)=>totalTied(i));
+      row.style.display=anyTie?"":"none";
+      row.querySelectorAll("[data-tb]").forEach(inp=>{
+        inp.disabled=!totalTied(+inp.dataset.tb);
+      });
+    }
+  }
+
+  // 1인 모드: 소풍로봇 승패
+  if(isSolo()){
+    const rb=num(state.robot.snack)+num(state.robot.cloth);
+    const me=res[0]?res[0].total:0;
+    const b=$("soloBanner");
+    const name=esc(state.players[0].name||"플레이어1");
+    if(state.robot.snack===""&&state.robot.cloth===""){
+      b.className="banner"; b.textContent="로봇의 최다 스낵·식탁보 개수를 입력하면 결과가 나와요.";
+    }else if(me>rb){
+      b.className="banner win";
+      b.innerHTML=`🎉 ${name} 승리! <span class="vs">내 총점 ${me}점 vs 소풍로봇 ${rb}점</span>`;
+    }else if(me<rb){
+      b.className="banner lose";
+      b.innerHTML=`🤖 소풍로봇 승리… 다시 도전! <span class="vs">내 총점 ${me}점 vs 소풍로봇 ${rb}점</span>`;
+    }else{
+      b.className="banner";
+      b.innerHTML=`🤝 무승부! <span class="vs">내 총점 ${me}점 vs 소풍로봇 ${rb}점</span>`;
+    }
+  }
+}
+
+/* ════════ 전체 렌더 · 설정 이벤트 ════════ */
+function renderAll(){
+  $("pcVal").textContent=state.playerCount;
+  $("modeSeg").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.m===state.mode));
+  $("styleSeg").querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.s===state.inputStyle));
+  const chk=$("bonusChk");
+  chk.checked=state.bonus.on && !isSolo();
+  chk.disabled=isSolo();
+  $("bonusSwitch").classList.toggle("dis",isSolo());
+  $("soloNote").style.display=isSolo()?"":"none";
+  $("soloPanel").style.display=isSolo()?"":"none";
+  renderBonusPanel(); renderInput(); recalc();
+}
+
+$("pcMinus").addEventListener("click",()=>{ state.playerCount=clamp(state.playerCount-1,META.players.min,META.players.max); renderAll(); });
+$("pcPlus").addEventListener("click",()=>{ state.playerCount=clamp(state.playerCount+1,META.players.min,META.players.max); renderAll(); });
+$("modeSeg").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{ state.mode=b.dataset.m; renderAll(); }));
+$("styleSeg").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{ state.inputStyle=b.dataset.s; renderAll(); }));
+$("bonusChk").addEventListener("change",e=>{ state.bonus.on=e.target.checked; renderAll(); });
+document.querySelectorAll("[data-diff]").forEach(b=>b.addEventListener("click",()=>drawBonus(b.dataset.diff)));
+$("robSnack").addEventListener("input",e=>{ state.robot.snack=e.target.value; recalc(); });
+$("robCloth").addEventListener("input",e=>{ state.robot.cloth=e.target.value; recalc(); });
+$("resetBtn").addEventListener("click",()=>{
+  if(!confirm("모든 점수와 이름을 초기화할까요?")) return;
+  state.players=Array.from({length:9},(_,i)=>newPlayer(i));
+  state.robot={snack:"",cloth:""};
+  $("robSnack").value=""; $("robCloth").value="";
+  renderAll();
+});
+
+/* 헤더 마스코트 */
+$("mascots").innerHTML = SNACKS.map(s=>iconSVG(s.id,56,true)).join("");
+
+renderAll();
+</script>
+</body>
+</html>
